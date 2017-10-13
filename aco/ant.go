@@ -61,6 +61,7 @@ func (p *Ant) doWalk() {
 	}
 	p.walk = append(p.walk, p.walk[0])
 	p.walkLength = p.CalculateWalkLength()
+	p.colony.wg.Done()
 }
 
 func (p *Ant) chooseNext(currentNode int) int {

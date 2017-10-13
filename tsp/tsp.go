@@ -16,8 +16,6 @@ type TSP interface { //问题接口
 	GetName() string
 	GetLocations() []City
 	GetDistanceMatrix() Matrix
-	//GetBestValue() float64 //获取理论最优值
-	//GetPassValue() float64 //获取可接受值
 
 }
 

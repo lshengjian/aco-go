@@ -3,8 +3,8 @@ import (
 	"math/rand"
 	"fmt"
 	"time"
- // "strconv"
-  "github.com/lshengjian/aco-go/tsp"
+    "sync"
+    "github.com/lshengjian/aco-go/tsp"
 )
 type Colony struct {
    Alpha float64
@@ -20,7 +20,7 @@ type Colony struct {
    maxIterations int
    Population []*Ant
 	 bestLength float64
-	 
+	 wg sync.WaitGroup 
 	 IsQuick bool
 }
 func NewColony(popSize,maxIterations int,alpha,beta,pho,ip,q float64,p tsp.TSP)(*Colony) {
@@ -37,7 +37,7 @@ func NewColony(popSize,maxIterations int,alpha,beta,pho,ip,q float64,p tsp.TSP)(
 	rt.bestLength=1e99
 	rt.Population=make([]*Ant,popSize)
 	rt.Pheromones=make(tsp.Matrix,rt.size)
-
+	
 	rt.init()
 	return rt
 }
@@ -86,10 +86,12 @@ func (p *Colony)	Run() {
 }
 
 func (p *Colony) sendOutAnts() {
-	//size:=p.Problem.GetSize()
+	
+	p.wg.Add(p.popSize)
 	for  _,ant:=range p.Population {
-		ant.doWalk()
+	 go	ant.doWalk()
 	}
+	p.wg.Wait()
 }
 
 func (p *Colony) updatePheromones() {
