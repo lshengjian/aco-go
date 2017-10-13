@@ -13,15 +13,19 @@ type Colony struct {
    Q float64
    BasePheromone float64
    
-   Pheromones tsp.Matrix
+   pheromones tsp.Matrix
    Problem tsp.TSP
    size int
    popSize int
    maxIterations int
    Population []*Ant
-	 bestLength float64
+   bestLength float64
 	 wg sync.WaitGroup 
+
+	locks [][]sync.RWMutex
+	 
 	 IsQuick bool
+
 }
 func NewColony(popSize,maxIterations int,alpha,beta,pho,ip,q float64,p tsp.TSP)(*Colony) {
 	rt:= &Colony{}
@@ -36,21 +40,31 @@ func NewColony(popSize,maxIterations int,alpha,beta,pho,ip,q float64,p tsp.TSP)(
 	rt.maxIterations=maxIterations
 	rt.bestLength=1e99
 	rt.Population=make([]*Ant,popSize)
-	rt.Pheromones=make(tsp.Matrix,rt.size)
+	rt.pheromones=make(tsp.Matrix,rt.size)
 	
 	rt.init()
 	return rt
 }
 func (p *Colony) init(){
+	
 	ip:=p.BasePheromone
-	size:=p.Problem.GetSize()
-	for i := range p.Pheromones {
-		p.Pheromones[i] = make([]float64, size)
-		for j := range p.Pheromones[i] {
+	size:=p.size
+	p.locks=make([][]sync.RWMutex,size)
+	for i:=range p.locks{
+		p.locks[i]=make([]sync.RWMutex,size)
+		for j:=range p.locks[i] {
+			var lk sync.RWMutex
+			p.locks[i][j]=lk
+
+		}
+	}
+	for i := range p.pheromones {
+		p.pheromones[i] = make([]float64, size)
+		for j := range p.pheromones[i] {
 			if i != j {
-				p.Pheromones[i][j] = ip //initialize to base pheromone = 1
+				p.pheromones[i][j] = ip //initialize to base pheromone = 1
 			} else {
-				p.Pheromones[i][j] = 0.0
+				p.pheromones[i][j] = 0.0
 			}
 		}
 	}
@@ -62,75 +76,70 @@ func (p *Colony) init(){
 		p.Population[i] =ant
   }
 }
-func (p *Colony) Step(idx int)  {
 
-	//	fmt.Println("sendOutAnts")
-	p.sendOutAnts()
-	p.updatePheromones()
-	p.findBest(idx)
-
+func (p *Colony)	GetPheromon(i,j int) float64{
+	if p.IsQuick {
+		p.locks[i][j].RLock()
+	    defer p.locks[i][j].RUnlock()
+	}
+	return p.pheromones[i][j] 
 }
-
+func (p *Colony)	SetPheromon(i,j int,data float64) {
+	if p.IsQuick {
+		p.locks[i][j].Lock()
+	   defer p.locks[i][j].Unlock() 
+	}
+	p.pheromones[i][j] = data
+	p.pheromones[j][i] = data
+}
 func (p *Colony)	Run() {
 //	fmt.Println(p.Pho)
 	rand.Seed(time.Now().UnixNano())  
 	start := time.Now().UnixNano()
-	for i:=1;i <= p.maxIterations;i++{
-		//fmt.Println(i)
-		p.Step(i)
+	if p.IsQuick {
+		p.wg.Add(p.popSize)
+		for  _,ant:=range p.Population {
+			go	ant.Run()
+		}
+		p.wg.Wait()
+	}else{
+		for t:=1;t <= p.maxIterations;t++{
+			for  _,ant:=range p.Population {
+		       ant.Tour(t)
+			}
+		}
 	}
+	
 	end := time.Now().UnixNano()
 	ts := fmt.Sprintf("times:%.1f[ms]", float64(end-start)*1e-6)
 	fmt.Println(ts)
-	//fmt.Println(p.Pheromones[0])
+	//fmt.Println(p.pheromones[0])
 }
 
-func (p *Colony) sendOutAnts() {
-	
-	p.wg.Add(p.popSize)
-	for  _,ant:=range p.Population {
-	 go	ant.doWalk()
-	}
-	p.wg.Wait()
-}
-
-func (p *Colony) updatePheromones() {
-   p.evaporatePheromones()
-   p.layPheromones()
-}
 	
 
-func (p *Colony)  evaporatePheromones() {
-	size:=p.Problem.GetSize()
+func (p *Colony)  Evaporatepheromones() {
+	size:=p.size
     for x:=0; x < size;x++ {
       for y:=0; y < x;y++ {
-		   dq:=(1 - p.Pho) * p.Pheromones[x][y]
+		   dq:=(1 - p.Pho) * p.pheromones[x][y]
 		   if dq<p.BasePheromone{
 			 dq=p.BasePheromone
 		   }
-		   p.Pheromones[x][y] = dq
-		   p.Pheromones[y][x] = p.Pheromones[x][y]
+		   p.pheromones[x][y] = dq
+		   p.pheromones[y][x] = p.pheromones[x][y]
 		} 
   }
 }
-func (p *Colony) layPheromones() {
-	pheromones := p.Pheromones
-	for  _,ant:=range p.Population {
-		dq:=(1 / ant.walkLength) * p.Q
-	  for i := 1;i < len(ant.walk);i++ { //起始结点出现两次
-		 pheromones[ant.walk[i-1]][ant.walk[i]] += dq
-		  pheromones[ant.walk[i]][ant.walk[i-1]] +=dq
-		}
-  }
-}
+/*
 func (p *Colony) findBest(x int) {
    for  _,ant:=range p.Population {
       if (ant.walkLength < p.bestLength) {
 				p.bestLength = ant.walkLength
 				msg:=fmt.Sprintf("iterate:%d ant(%d)-->%.1f",x,ant.id,p.bestLength)
 				fmt.Println(msg)
-				fmt.Println(ant.walk)
+			//	fmt.Println(ant.walk)
 		//  strconv.Itoa(x) 
 	    }
    }
-}
+}*/

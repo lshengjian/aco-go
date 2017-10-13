@@ -2,6 +2,7 @@ package aco
 
 import (
 
+
 	"math"
 //	"fmt"
 	"math/rand"
@@ -10,6 +11,7 @@ import (
 type Ant struct {
 	colony     *Colony
 	walkLength float64
+	bestLength float64
 	base       int
 
 	walk    []int
@@ -20,7 +22,7 @@ type Ant struct {
 func NewAnt(c *Colony) *Ant {
 	rt := Ant{}
 	rt.colony = c
-	
+	rt.bestLength =1e99
 	return &rt
 
 }
@@ -36,10 +38,10 @@ func (p *Ant) SetWalk(data []int) {
  */
 func (p *Ant) setBase(base int) {
 	p.base = base
-	p.walkLength = 1e99
+//	p.walkLength = 1e99
 	p.walk = make([]int, 1)
 	p.walk[0] = base
-	//p.visited = nil
+
 	p.visited = make([]bool,p.colony.Problem.GetSize())
 	
 /*	for i:=range p.visited{
@@ -48,25 +50,45 @@ func (p *Ant) setBase(base int) {
 	p.visited[base] = true
 }
 
-
-func (p *Ant) doWalk() {
-	//size := p.colony.Problem.GetSize()
-    p.setBase(rand.Intn(p.colony.size))
+func (p *Ant) Tour(t int) {
+	p.setBase(rand.Intn(p.colony.size))
 	for i := 1;i < p.colony.size;i++ {
-		next := p.chooseNext(p.walk[i-1])
-		p.walk = append(p.walk, next)
-		p.visited[next] = true
+  	  next := p.chooseNext(p.walk[i-1])
+	  p.walk = append(p.walk, next)
+	  p.visited[next] = true
 	//	fmt.Println(p.id,"choose next:",next)
-		
 	}
 	p.walk = append(p.walk, p.walk[0])
 	p.walkLength = p.CalculateWalkLength()
-	p.colony.wg.Done()
+	p.layPheromones()
+	if  p.bestLength > p.walkLength{
+		p.bestLength = p.walkLength
+		//msg:=fmt.Sprintf("ant(%d) iterate:%d -->%.1f",p.id,t,p.bestLength)
+		//fmt.Println(msg)
+	}
+	if p.id==p.colony.popSize-1{
+		p.colony.Evaporatepheromones()
+	}
 }
-
+func (p *Ant) Run() {
+	
+		for t:=1;t <= p.colony.maxIterations;t++{
+			p.Tour(t)
+		} 
+		p.colony.wg.Done()
+	
+}
+func (p *Ant) layPheromones() {
+	dq:=(1 / p.walkLength) * p.colony.Q
+	for i := 1;i < len(p.walk);i++ { //起始结点出现两次
+		k1,k2:=p.walk[i-1],p.walk[i]
+		data:=p.colony.GetPheromon(k1,k2)+dq
+		p.colony.SetPheromon(k1,k2,data)
+	
+  }
+}
 func (p *Ant) chooseNext(currentNode int) int {
 	distances := p.colony.Problem.GetDistanceMatrix()
-	pheromones := p.colony.Pheromones
 	alpha := p.colony.Alpha
 	beta := p.colony.Beta
 	sum := 0.0
@@ -76,8 +98,9 @@ func (p *Ant) chooseNext(currentNode int) int {
 	for i:=range p.visited {
 		//if _, ok := p.visited[i]; !ok && i != currentNode {
 		if  !p.visited[i] && i != currentNode {
+			pher:=p.colony.GetPheromon(currentNode,i)
 			unvisited = append(unvisited, i)
-			data:= math.Pow(pheromones[currentNode][i], alpha) * math.Pow((1/distances[currentNode][i]), beta)
+			data:= math.Pow(pher, alpha) * math.Pow((1/distances[currentNode][i]), beta)
 			sum += data
 			probs=  append(probs,data)
 		}
@@ -85,15 +108,9 @@ func (p *Ant) chooseNext(currentNode int) int {
 	if len(unvisited)==1{
 		return unvisited[0]
 	}
-   /* if len(unvisited)<1{
-	   fmt.Println("chooseNext error")
-	   return -1
-    }*/
-			
 	for i:=range unvisited {
 	   probs[i] =  probs[i]/sum
 	}
-
 
 	rnd := rand.Float64()
 	x:=0

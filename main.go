@@ -1,7 +1,8 @@
 package main
 
 import (
-//	"log"
+	"fmt"
+	"runtime"
 	"os"
 	"github.com/urfave/cli"
 	"github.com/lshengjian/aco-go/tsp"
@@ -21,13 +22,18 @@ func main() {
 		},
 		cli.IntFlag{
 			Name:  "ants, a",
-			Value: 10,
+			Value: 8,
 			Usage: "ant poplation.",
 		},
 		cli.IntFlag{
-			Name:  "trys, t",
-			Value: 100,
+			Name:  "tries, t",
+			Value: 6000,
 			Usage: "try times.",
+		},
+		cli.BoolFlag{
+			Name:  "speed, s",
+		//	Value: 1,
+			Usage: "use multi CPU cores.",
 		},
 	}
 	app.Name = "ACO-GO"
@@ -43,13 +49,21 @@ func main() {
 	app.Action = func(c *cli.Context) error {
 	
 		ants := c.Int("ants")
-		tries := c.Int("trys")
+		tries := c.Int("tries")
 		fname := c.String("file_tsp")
-		//log.Println("ants:",ants,"tsp-file:",fname)
+		//
 		tsp:=tsp.NewFileTSP(fname)
-		//int(arg_ants)
+		
 		swarm:=aco.NewColony(ants,tries,1,3,0.1,1,1,tsp)
-		swarm.IsQuick=false
+		//speed:=
+		swarm.IsQuick=c.Bool("speed")
+		fmt.Println("tries:",tries,"ants",ants)
+		if (!swarm.IsQuick){
+			//runtime.GOMAXPROCS(1)
+		}else{
+			fmt.Println("use CPU cores:",runtime.NumCPU())
+		}
+		  
         swarm.Run()
 		//start(arg_f)
 		return nil
