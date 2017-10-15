@@ -22,12 +22,12 @@ func main() {
 		},
 		cli.IntFlag{
 			Name:  "ants, a",
-			Value: 8,
+			Value: 20,
 			Usage: "ant poplation.",
 		},
 		cli.IntFlag{
 			Name:  "tries, t",
-			Value: 6000,
+			Value: 200,
 			Usage: "try times.",
 		},
 		cli.BoolFlag{
@@ -54,7 +54,7 @@ func main() {
 		//
 		tsp:=tsp.NewFileTSP(fname)
 		
-		swarm:=aco.NewColony(ants,tries,1,3,0.1,1,1,tsp)
+		swarm:=aco.NewColony(ants,tries,1.0,5.0,0.1,1.0,1.0,tsp)
 		//speed:=
 		swarm.IsQuick=c.Bool("speed")
 		fmt.Println("tries:",tries,"ants",ants)
@@ -64,7 +64,8 @@ func main() {
 			fmt.Println("use CPU cores:",runtime.NumCPU())
 		}
 		  
-        swarm.Run()
+		swarm.Run()
+		fmt.Println("best:",swarm.GetBest())
 		//start(arg_f)
 		return nil
 	}

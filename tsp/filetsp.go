@@ -11,7 +11,7 @@ type FileTSP struct {
 	size        int
 	name string
 	locations []City
-	distanceMatrix Matrix
+	distanceMatrix IntMatrix
 }
 func (t *FileTSP) GetSize() int{
 	return t.size
@@ -22,7 +22,7 @@ func (t *FileTSP) GetName() string{
 func (t *FileTSP) GetLocations() []City{
 	return t.locations
 }
-func (t *FileTSP) GetDistanceMatrix() Matrix{
+func (t *FileTSP) GetDistanceMatrix() IntMatrix{
 	return t.distanceMatrix
 }
 func NewFileTSP(fname string)(TSP) {
@@ -32,11 +32,12 @@ func NewFileTSP(fname string)(TSP) {
 }
 //making graph
 func (t *FileTSP) initGraph(fname string) {
+	t.name=fname
 	t. readFile(fname)
 	t.size = len(t.locations)
-	t.distanceMatrix = make(Matrix, t.size)
+	t.distanceMatrix = make(IntMatrix, t.size)
 	for i := range t.distanceMatrix {
-		t.distanceMatrix[i] = make([]float64, t.size)
+		t.distanceMatrix[i] = make([]int, t.size)
 		for j := range t.distanceMatrix[i] {
 			t.distanceMatrix[i][j] = CalEdge(t.locations[i], t.locations[j])
 		}

@@ -5,7 +5,7 @@ import (
 
 )
 type Matrix [][]float64
-
+type IntMatrix [][]int
 type City struct {
 	X, Y float64
 }
@@ -15,13 +15,13 @@ type TSP interface { //问题接口
 	GetSize() int
 	GetName() string
 	GetLocations() []City
-	GetDistanceMatrix() Matrix
+	GetDistanceMatrix() IntMatrix
 
 }
 
 //calculates edge weight (euclidiean distance)
-func CalEdge(c1, c2 City) float64 {
+func CalEdge(c1, c2 City) int {
 	dx:=c2.X-c1.X
 	dy:=c2.Y-c1.Y
-	return math.Sqrt(dx*dx+dy*dy)
+	return int(math.Sqrt(dx*dx+dy*dy)+0.5)
 }
