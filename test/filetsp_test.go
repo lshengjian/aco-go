@@ -1,19 +1,18 @@
 package test
 
 import (
-	"math"
-//	"fmt"
+
+
 	"testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/lshengjian/aco-go/tsp"
 )
 
-
 func Test01TSP(t *testing.T) {
 	a := assert.New(t)
 	c1:=tsp.City{0,0}
 	c2:=tsp.City{3,4}
-	a.Equal(5.0,tsp.CalEdge(c1,c2))
+	a.Equal(5,tsp.CalEdge(c1,c2))
 	tsp:=tsp.NewFileTSP("../data/eil51.tsp")
 	a.Equal(51,tsp.GetSize())
 	cities:=tsp.GetLocations()
@@ -22,7 +21,7 @@ func Test01TSP(t *testing.T) {
 	a.Equal(40.0,node.Y)
 	dis:=tsp.GetDistanceMatrix()
 //	fmt.Println(cities)
-	a.Equal(12.0,math.Floor(dis[0][1]))
+	a.Equal(12,dis[0][1])
 }
 func Test02TSP(t *testing.T) {
 	a := assert.New(t)
