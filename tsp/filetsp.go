@@ -1,8 +1,11 @@
 
 package tsp
 import (
+	"math/rand"
+	"fmt"
 	"bufio"
 	"os"
+
 	"strconv"
 	"strings"
 	"github.com/lshengjian/aco-go/util"
@@ -27,13 +30,38 @@ func (t *FileTSP) GetDistanceMatrix() IntMatrix{
 }
 func NewFileTSP(fname string)(TSP) {
 	var rt FileTSP
-	rt.initGraph(fname)
+	rt.name=fname
+	fmt.Println(fname)
+	if strings.HasSuffix(fname,"tsp"){
+		rt.initGraph("./data/"+fname)
+	}else{
+		ss:=strings.Split(fname,"-")
+		n,_:=strconv.Atoi(ss[1])
+		rt.randGraph(n)
+	}
+	
+	
 	return &rt
 }
 //making graph
+func (t *FileTSP) randGraph(n int) {
+	t.locations = make([]City, n)
+	t.size = len(t.locations)
+	t.distanceMatrix = make(IntMatrix, t.size)
+	for i := range t.locations {
+		t.locations[i]= City{rand.Float64()*100.0, rand.Float64()*100.0}
+	}
+	for i := range t.distanceMatrix {
+		t.distanceMatrix[i] = make([]int, t.size)
+		for j := range t.distanceMatrix[i] {
+			t.distanceMatrix[i][j] = CalEdge(t.locations[i], t.locations[j])
+		}
+	}
+}
+//making graph
 func (t *FileTSP) initGraph(fname string) {
-	t.name=fname
-	t. readFile(fname)
+	
+	t.readFile(fname)
 	t.size = len(t.locations)
 	t.distanceMatrix = make(IntMatrix, t.size)
 	for i := range t.distanceMatrix {

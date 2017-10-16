@@ -1,9 +1,6 @@
 package aco
 import (
-//	"sort"
-	"math/rand"
-	"fmt"
-	"time"
+
 	"sync"
 	"github.com/lshengjian/aco-go/util"
     "github.com/lshengjian/aco-go/tsp"
@@ -123,8 +120,7 @@ func (p *Colony)	SetPheromon(i,j int,data float64) {
 }
 
 func (p *Colony)	Run() {
-	rand.Seed(time.Now().UnixNano())  
-	start := time.Now().UnixNano()
+	
 	if p.IsQuick {
 		for  _,ant:=range p.Population {
 			go	ant.Run()
@@ -155,8 +151,8 @@ func (p *Colony)	Run() {
 		}
 		
 	}
-	end := time.Now().UnixNano()
-	ts := fmt.Sprintf("times:%.1f[ms]", float64(end-start)*1e-6)
+	//end := time.Now().UnixNano()
+/*	ts := fmt.Sprintf("times:%.1f[ms]", float64(end-start)*1e-6)
 	fmt.Println(ts)
 	util.SaveTourLengthImage("tour-len.png",p.bestData,p.avgData)
 	vd:=make ([]util.CityData,p.size+1)
@@ -168,7 +164,7 @@ func (p *Colony)	Run() {
 		vd[i]=item
 	}
 
-    util.SaveVisitedImage("visited.png",vd)
+    util.SaveVisitedImage("visited.png",vd)*/
 }
 
 func (p *Colony) layPheromones(walkLength int ,walk []int) {
@@ -197,9 +193,9 @@ func (p *Colony) evaporatePheromones() {
 func (p *Colony) findBest(x int,msg Message) int{
     l:=p.CalculateWalkLength(msg.walk)
     if l < p.bestLength {
-		str:=fmt.Sprintf("iterate:%d (ant:%d) -->%d",x,msg.ant.idx+1,l)
+	//	str:=fmt.Sprintf("iterate:%d (ant:%d) -->%d",x,msg.ant.idx+1,l)
 		p.bestLength=l
-		fmt.Println(str)
+	//	fmt.Println(str)
 		p.best=msg.walk
 	    p.bestData=append(p.bestData,util.TourLengthData{x,p.bestLength})
    }

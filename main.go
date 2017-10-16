@@ -2,9 +2,13 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"runtime"
+	"time"
 	"os"
+	"io/ioutil"
 	"github.com/urfave/cli"
+	"github.com/lshengjian/aco-go/util"
 	"github.com/lshengjian/aco-go/tsp"
 	"github.com/lshengjian/aco-go/aco"
 )
@@ -15,11 +19,6 @@ var Version = "1.0.0"
 func main() {
 	app := cli.NewApp()
 	app.Flags = []cli.Flag{
-	   cli.StringFlag{
-			Name:  "file_tsp ,f",
-			Value: "./data/eil51.tsp",
-			Usage: "TSP file `filename`",
-		},
 		cli.IntFlag{
 			Name:  "ants, a",
 			Value: 20,
@@ -32,8 +31,12 @@ func main() {
 		},
 		cli.BoolFlag{
 			Name:  "speed, s",
-		//	Value: 1,
 			Usage: "use multi CPU cores.",
+		},
+		cli.StringFlag{
+			Name:  "output ,o",
+			Value: "./mydata.txt",
+			Usage: "output file `filename`",
 		},
 	}
 	app.Name = "ACO-GO"
@@ -47,31 +50,47 @@ func main() {
 	app.Version = Version
 	
 	app.Action = func(c *cli.Context) error {
-	
+		rand.Seed(time.Now().UnixNano())  
+		//fs:=[4]string{"eil51.tsp","R-20","R-50","R-100"}
+		
 		ants := c.Int("ants")
 		tries := c.Int("tries")
-		fname := c.String("file_tsp")
-		//
-		tsp:=tsp.NewFileTSP(fname)
+		flist,err:=ioutil.ReadDir("./data")
+		util.CheckError(err)
 		
-		swarm:=aco.NewColony(ants,tries,1.0,5.0,0.1,1.0,1.0,tsp)
-		//speed:=
-		swarm.IsQuick=c.Bool("speed")
+		
+		
 		fmt.Println("tries:",tries,"ants",ants)
-		if (!swarm.IsQuick){
-			//runtime.GOMAXPROCS(1)
-		}else{
-			fmt.Println("use CPU cores:",runtime.NumCPU())
+		if c.Bool("speed") {
+			fmt.Println("CPU cores:",runtime.NumCPU())
 		}
-		  
-		swarm.Run()
-		fmt.Println("best:",swarm.GetBest())
-		//start(arg_f)
+		
+		cnt:=5
+		timers:=make([][]float64,len(flist))
+		data:=make([]*util.TestData,len(flist))
+		for i,f:=range flist{
+			timers[i]=make([]float64,cnt)
+			p:=tsp.NewFileTSP(f.Name())
+			for t := 0; t < cnt; t++ {
+				t1 := time.Now()
+				swarm:=aco.NewColony(ants,tries,1.0,5.0,0.1,1.0,1.0,p)
+				swarm.IsQuick=c.Bool("speed")
+				swarm.Run()
+				timers[i][t]=time.Since(t1).Seconds()
+				fmt.Println(t,"best:",swarm.GetBestLength())
+				fmt.Println(t,"cost time:",timers[i][t])
+			}
+			data[i]=&util.TestData{p.GetName(),"",timers[i]}
+		}
+		
+		r:=&util.ResultData{}
+		for _,d :=range data	{
+            r.Results=append(r.Results,d)
+		}
+		
+		r.SaveDataToFile(c.String("output"))
 		return nil
 	}
 	app.Run(os.Args)
-/*	err := app.Run(os.Args)
-	if err != nil {
-		log.Fatal(4, "Failed to run app with %s: %v", os.Args, err)
-	}*/
+
 }

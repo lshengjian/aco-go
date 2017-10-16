@@ -8,8 +8,55 @@ import (
 	"gonum.org/v1/plot/plotter"
 	"gonum.org/v1/plot/plotutil"
 	"gonum.org/v1/plot/vg"
-//	"gonum.org/v1/plot/vg/draw"
+	"io/ioutil"
+	"math"
+	"gonum.org/v1/gonum/floats"
+	"gonum.org/v1/gonum/stat"
+	
 )
+func CheckError(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+	
+	func WriteFile(fname ,data string)  {
+		err:=ioutil.WriteFile(fname,[]byte(data),0644)
+		CheckError(err) 
+	}
+	type TestData struct{
+		Name string
+		Args string
+		Data []float64
+	}
+	
+	func (p *TestData) Min() float64{
+		return floats.Min(p.Data)
+	}
+	func (p *TestData) Max() float64{
+		return floats.Max(p.Data)
+	}
+	func (p *TestData) Mean() float64{
+		return stat.Mean(p.Data, nil)
+	}
+	func (p *TestData) Std() float64{
+		return math.Sqrt(stat.Variance(p.Data, nil))
+	}
+	
+	type ResultData struct{
+	//	ProblemName string
+	 //   Tries int
+		Results []*TestData
+	}
+	func (p *ResultData) SaveDataToFile(fname string)  {
+		 //fname:=p.ProblemName+".txt"
+		 str:="Method\tMean\tMin\tMax\tStd\n"
+		 for _,d:=range p.Results{
+			 str+=fmt.Sprintf("%s\t%.2G\t%.2G\t%.2G\t%.2G\n",d.Name,d.Mean(),d.Min(),d.Max(),d.Std())
+		 }
+		 WriteFile(fname,str)
+	
+	}
 type CityData struct{
   Idx int
   X,Y float64 
