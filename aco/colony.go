@@ -74,7 +74,6 @@ func (p *Colony) init(){
 		for j:=range p.locks[i] {
 			var lk sync.RWMutex
 			p.locks[i][j]=lk
-
 		}
 	}
 	for i := range p.pheromones {
