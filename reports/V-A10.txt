@@ -1,0 +1,4 @@
+Method	Mean	Min	Max	Std
+eil51.tsp	455.6	446	461	5.683
+kroA100.tsp	2.32E+04	2.274E+04	2.361E+04	360.7
+pcb442.tsp	6.101E+04	6.083E+04	6.148E+04	277.1

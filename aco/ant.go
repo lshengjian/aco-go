@@ -93,4 +93,3 @@ func (p *Ant) chooseNext(currentNode int) int {
 }
 
 
-

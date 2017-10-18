@@ -1,5 +1,6 @@
-package aco
+package aco-x
 import (
+	"math"
 
 	"sync"
 	"github.com/lshengjian/aco-go/util"
@@ -28,8 +29,9 @@ type Colony struct {
    Pho float64
    Q float64
    BasePheromone float64
-   
+  // trail_0 float64
    pheromones tsp.Matrix
+   totals tsp.Matrix
    Problem tsp.TSP
    size int
    popSize int
@@ -60,13 +62,13 @@ func NewColony(popSize,maxIterations int,alpha,beta,pho,ip,q float64,p tsp.TSP)(
 	rt.bestLength=999999999
 	rt.Population=make(Ants,popSize)
 	rt.pheromones=make(tsp.Matrix,rt.size)
-	
+	rt.totals=make(tsp.Matrix,rt.size)
 	rt.init()
 	return rt
 }
 func (p *Colony) init(){
 	p.resultCh=make ( chan Message,p.popSize)
-	ip:=p.BasePheromone
+	//ip:=p.BasePheromone
 	size:=p.size
 	p.locks=make([][]sync.RWMutex,size)
 	for i:=range p.locks{
@@ -76,26 +78,34 @@ func (p *Colony) init(){
 			p.locks[i][j]=lk
 		}
 	}
-	for i := range p.pheromones {
-		p.pheromones[i] = make([]float64, size)
-		for j := range p.pheromones[i] {
-			if i != j {
-				p.pheromones[i][j] = ip //initialize to base pheromone = 1
-			} else {
-				p.pheromones[i][j] = 0.0
-			}
-		}
-	}
 	
+	p.init_pheromone_trails(  )
+	/*
+	
+	*/
 	for  i:=0;i < p.popSize;i++ {
 		ant:= NewAnt(p)
 		ant.idx=i
 		p.Population[i] =ant
   }
 }
+func (p *Colony) init_pheromone_trails(){
+	ant:= NewAnt(p)
+	ant.nn_tour() 
+	p.BasePheromone = 1.0 /  float64(p.size*ant.walkLength ) 
+	for i := range p.pheromones {
+		p.pheromones[i] = make([]float64, p.size)
+		p.totals[i] = make([]float64, p.size)
+		for j := range p.pheromones[i] {
+			p.pheromones[i][j] = p.BasePheromone //initialize to base pheromone = 1
+			p.totals[i][j] = p.BasePheromone
+		}
+	}
+}
 func (p *Colony) GetBest() []int {
 	return p.best
 }
+
 func (p *Colony) GetBestLength() int {
 	return p.bestLength
 }
@@ -106,16 +116,27 @@ func (p *Colony)	GetPheromon(i,j int) float64{
 	}
 	return p.pheromones[i][j] 
 }
+func (p *Colony)	GetTotal(i,j int) float64{
+	if p.IsQuick {
+		p.locks[i][j].RLock()
+	    defer p.locks[i][j].RUnlock()
+	}
+	return p.totals[i][j] 
+}
 func (p *Colony)	SetPheromon(i,j int,data float64) {
 	if p.IsQuick {
 		p.locks[i][j].Lock()
 	   defer p.locks[i][j].Unlock() 
 	}
-	if data < 1e-10 {
-		data=p.BasePheromone*1e-2
-	}
+	//if data < 1e-10 {
+	//	data=p.BasePheromone*1e-2
+	//}
 	p.pheromones[i][j] = data
 	p.pheromones[j][i] = data
+	data2:= math.Pow(data,p.Alpha) * math.Pow(p.HEURISTIC(i,j), p.Beta)
+	p.totals[i][j]=data2
+	p.totals[j][i]=data2
+
 }
 
 func (p *Colony)	Run() {
@@ -165,19 +186,20 @@ func (p *Colony)	Run() {
 
     util.SaveVisitedImage("visited.png",vd)*/
 }
-
+//global_acs_pheromone_update
 func (p *Colony) layPheromones(walkLength int ,walk []int) {
-	dq:= p.Q / float64(walkLength)
-	//if walkLength==p.bestLength {
-		dq*=float64(p.bestLength)/float64(walkLength)*3
-	//}
+	dq:= p.Q *3.0/ float64(walkLength)*float64(p.bestLength)/float64(walkLength)
+
+	//
 	for i := 1;i < len(walk);i++ { //起始结点出现两次
 		k1,k2:=walk[i-1],walk[i]
 		data:=p.GetPheromon(k1,k2)+dq
 		p.SetPheromon(k1,k2,data)
   }
 }
-	
+func (p *Colony) HEURISTIC(m,n int) float64{
+	return (1.0 / (float64(p.Problem.GetDistanceMatrix()[m][n]) + 0.1))
+}     
 
 func (p *Colony) evaporatePheromones() {
 	size:=p.size
@@ -209,3 +231,29 @@ func (p *Colony) CalculateWalkLength(walk []int) int {
     }
     return sum
 }
+//lay Pheromones
+/*
+{	sort.Sort(p.Population)
+	maxIdx:=int(float64(p.popSize)*0.9)
+	for  _,ant:=range p.Population {
+		dq:= p.Q / float64(ant.GetWalkLength())
+		
+		if p.IsQuick {
+			ant.lock.RLock()
+		}
+		//fmt.Println("ant :",ant.idx+1)
+		for i := 1;i < (p.size+1);i++ { //起始结点出现两次
+			fmt.Println("walk city :",ant.idx+1)
+			k1,k2:=ant.walk[i-1],ant.walk[i]
+			old:=p.GetPheromon(k1,k2)
+			if i<=maxIdx {
+				p.SetPheromon(k1,k2,old+dq)
+			}else{
+				p.SetPheromon(k1,k2,old-dq)
+			}
+		}
+		if p.IsQuick {
+			ant.lock.RUnlock()
+		}
+	}
+}*/

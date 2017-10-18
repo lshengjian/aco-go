@@ -2,16 +2,18 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math/rand"
+	"os"
 	"runtime"
 	"time"
-	"os"
-	"io/ioutil"
-	"github.com/urfave/cli"
-	"github.com/lshengjian/aco-go/util"
-	"github.com/lshengjian/aco-go/tsp"
+
 	"github.com/lshengjian/aco-go/aco"
+	"github.com/lshengjian/aco-go/tsp"
+	"github.com/lshengjian/aco-go/util"
+	"github.com/urfave/cli"
 )
+
 // Version holds the current app version
 var Version = "1.0.0"
 
@@ -25,8 +27,13 @@ func main() {
 			Usage: "ant poplation.",
 		},
 		cli.IntFlag{
-			Name:  "tries, t",
+			Name:  "iterations, i",
 			Value: 200,
+			Usage: "iterations.",
+		},
+		cli.IntFlag{
+			Name:  "tries, t",
+			Value: 5,
 			Usage: "try times.",
 		},
 		cli.BoolFlag{
@@ -35,60 +42,73 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "output ,o",
-			Value: "./mydata.txt",
+			Value: "A20",
 			Usage: "output file `filename`",
 		},
 	}
 	app.Name = "ACO-GO"
 	app.Authors = []cli.Author{
-	    cli.Author{
+		cli.Author{
 			Name:  "Liu Shengjian",
 			Email: "lsj178@139.com",
 		},
 	}
 	app.Usage = "ACO demo"
 	app.Version = Version
-	
+
 	app.Action = func(c *cli.Context) error {
-		rand.Seed(time.Now().UnixNano())  
+		rand.Seed(time.Now().UnixNano())
 		//fs:=[4]string{"eil51.tsp","R-20","R-50","R-100"}
-		
+
 		ants := c.Int("ants")
 		tries := c.Int("tries")
-		flist,err:=ioutil.ReadDir("./data")
+		iterations := c.Int("iterations")
+		flist, err := ioutil.ReadDir("./data")
 		util.CheckError(err)
-		
-		
-		
-		fmt.Println("tries:",tries,"ants",ants)
+
+		fmt.Println("iterations:", iterations, "ants", ants)
 		if c.Bool("speed") {
-			fmt.Println("CPU cores:",runtime.NumCPU())
+			fmt.Println("CPU cores:", runtime.NumCPU())
 		}
-		
-		cnt:=5
-		timers:=make([][]float64,len(flist))
-		data:=make([]*util.TestData,len(flist))
-		for i,f:=range flist{
-			timers[i]=make([]float64,cnt)
-			p:=tsp.NewFileTSP(f.Name())
+
+		cnt := tries
+		total := len(flist)
+		timers := make([][]float64, total)
+		//data := make([]*util.TestData, len(flist))
+		datas := make([][]float64, total)
+		timeData := make([]*util.TestData, total)
+		valueData := make([]*util.TestData, total)
+		for i, f := range flist {
+			timers[i] = make([]float64, cnt)
+			datas[i] = make([]float64, cnt)
+			p := tsp.NewFileTSP(f.Name())
 			for t := 0; t < cnt; t++ {
 				t1 := time.Now()
-				swarm:=aco.NewColony(ants,tries,1.0,5.0,0.1,1.0,1.0,p)
-				swarm.IsQuick=c.Bool("speed")
+				swarm := aco.NewColony(ants, iterations, 1.0, 5.0, 0.1, 1.0, 1.0, p)
+				swarm.IsQuick = c.Bool("speed")
 				swarm.Run()
-				timers[i][t]=time.Since(t1).Seconds()
-				fmt.Println(t,"best:",swarm.GetBestLength())
-				fmt.Println(t,"cost time:",timers[i][t])
+				timers[i][t] = time.Since(t1).Seconds()
+				fmt.Println(t, "best:", swarm.GetBestLength())
+				datas[i][t] =float64( swarm.GetBestLength() )
 			}
-			data[i]=&util.TestData{p.GetName(),"",timers[i]}
+			timeData[i] = &util.TestData{p.GetName(), "", timers[i]}
+			valueData[i] = &util.TestData{p.GetName(), "", datas[i]}
 		}
-		
-		r:=&util.ResultData{}
-		for _,d :=range data	{
-            r.Results=append(r.Results,d)
+
+		r1 := &util.ResultData{}
+		r2 := &util.ResultData{}
+		for _, d := range timeData {
+			r1.Results = append(r1.Results, d)
 		}
-		
-		r.SaveDataToFile(c.String("output"))
+		for _, d := range valueData {
+			r2.Results = append(r2.Results, d)
+		}
+		flag := ""
+		if c.Bool("speed") {
+			flag = "Q"
+		}
+		r1.SaveDataToFile("./reports/T-" + c.String("output") + flag + ".txt")
+		r2.SaveDataToFile("./reports/V-" + c.String("output") + flag + ".txt")
 		return nil
 	}
 	app.Run(os.Args)

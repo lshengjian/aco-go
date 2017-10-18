@@ -52,7 +52,7 @@ func CheckError(e error) {
 		 //fname:=p.ProblemName+".txt"
 		 str:="Method\tMean\tMin\tMax\tStd\n"
 		 for _,d:=range p.Results{
-			 str+=fmt.Sprintf("%s\t%.2G\t%.2G\t%.2G\t%.2G\n",d.Name,d.Mean(),d.Min(),d.Max(),d.Std())
+			 str+=fmt.Sprintf("%s\t%.4G\t%.4G\t%.4G\t%.4G\n",d.Name,d.Mean(),d.Min(),d.Max(),d.Std())
 		 }
 		 WriteFile(fname,str)
 	
