@@ -1,6 +1,7 @@
 package main
 
 import (
+
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -16,8 +17,78 @@ import (
 
 // Version holds the current app version
 var Version = "1.0.0"
+func run(app *cli.App){
+	app.Action = func(c *cli.Context) error {
+		rand.Seed(time.Now().UnixNano())
+		//fs:=[4]string{"eil51.tsp","R-20","R-50","R-100"}
+		ants := c.Int("ants")
+		tries := c.Int("tries")
+		iterations := c.Int("iterations")
+		flist, err := ioutil.ReadDir("./data")
+		util.CheckError(err)
 
-// go install -ldflags "-s -w"
+		fmt.Println("iterations:", iterations, "ants", ants)
+		if c.Bool("speed") {
+			fmt.Println("CPU cores:", runtime.NumCPU())
+		}
+
+		if tries < 1 {
+			tries=1
+		}
+		total := len(flist)
+	
+		timers := make([][]float64, total)
+		datas := make([][]float64, total)
+		timeData := make([]*util.TestData, total)
+		valueData := make([]*util.TestData, total)
+	
+		fnames:=make([]string,total)
+		for i, f := range flist {
+			timers[i] = make([]float64, tries)
+			datas[i] = make([]float64, tries)
+			p := tsp.NewFileTSP(f.Name())
+			fnames[i]=p.GetName()
+			for t := 0; t < tries; t++ {
+				t1 := time.Now()
+				swarm := aco.NewColony(ants, iterations, 1.0, 5.0, 0.1, 1.0, 1.0, p)
+				swarm.IsQuick = c.Bool("speed")
+				swarm.IsMakeImage=tries==1
+				swarm.Run()
+				timers[i][t] = time.Since(t1).Seconds()
+				fmt.Println(swarm.Problem.GetName(),"-->", swarm.GetBestLength())
+				datas[i][t] =float64( swarm.GetBestLength() )
+			}
+			timeData[i] = &util.TestData{fnames[i], "", timers[i]}
+			valueData[i] = &util.TestData{fnames[i], "", datas[i]}
+		
+
+		}
+		if tries > 1 {
+			r1 := &util.ResultData{}
+			r2 := &util.ResultData{}
+			for _, d := range timeData {
+				r1.Results = append(r1.Results, d)
+			}
+			for _, d := range valueData {
+				r2.Results = append(r2.Results, d)
+			}
+			flag := ""
+			if c.Bool("speed") {
+				flag = "(Q)"
+			}
+			
+			oname:=fmt.Sprintf("A%dT%d",ants,tries)+ flag + ".txt"
+			r1.SaveDataToFile("./reports/T-" +oname )
+			r2.SaveDataToFile("./reports/V-" + oname )
+			fmt.Println("output report for:",oname)
+		}
+		return nil
+	}
+	app.Run(os.Args)
+}
+// GOOS=windows GOARCH=amd64 go install -ldflags "-s -w"
+// GOOS=linux GOARCH=amd64 go install -ldflags "-s -w"
+// GOOS=darwin GOARCH=amd64 go install -ldflags "-s -w"
 func main() {
 	app := cli.NewApp()
 	app.Flags = []cli.Flag{
@@ -33,18 +104,18 @@ func main() {
 		},
 		cli.IntFlag{
 			Name:  "tries, t",
-			Value: 5,
+			Value: 1,
 			Usage: "try times.",
 		},
 		cli.BoolFlag{
 			Name:  "speed, s",
 			Usage: "use multi CPU cores.",
 		},
-		cli.StringFlag{
+	/*	cli.StringFlag{
 			Name:  "output ,o",
 			Value: "A20",
 			Usage: "output file `filename`",
-		},
+		},*/
 	}
 	app.Name = "ACO-GO"
 	app.Authors = []cli.Author{
@@ -55,62 +126,7 @@ func main() {
 	}
 	app.Usage = "ACO demo"
 	app.Version = Version
+    run(app)
 
-	app.Action = func(c *cli.Context) error {
-		rand.Seed(time.Now().UnixNano())
-		//fs:=[4]string{"eil51.tsp","R-20","R-50","R-100"}
-
-		ants := c.Int("ants")
-		tries := c.Int("tries")
-		iterations := c.Int("iterations")
-		flist, err := ioutil.ReadDir("./data")
-		util.CheckError(err)
-
-		fmt.Println("iterations:", iterations, "ants", ants)
-		if c.Bool("speed") {
-			fmt.Println("CPU cores:", runtime.NumCPU())
-		}
-
-		cnt := tries
-		total := len(flist)
-		timers := make([][]float64, total)
-		//data := make([]*util.TestData, len(flist))
-		datas := make([][]float64, total)
-		timeData := make([]*util.TestData, total)
-		valueData := make([]*util.TestData, total)
-		for i, f := range flist {
-			timers[i] = make([]float64, cnt)
-			datas[i] = make([]float64, cnt)
-			p := tsp.NewFileTSP(f.Name())
-			for t := 0; t < cnt; t++ {
-				t1 := time.Now()
-				swarm := aco.NewColony(ants, iterations, 1.0, 5.0, 0.1, 1.0, 1.0, p)
-				swarm.IsQuick = c.Bool("speed")
-				swarm.Run()
-				timers[i][t] = time.Since(t1).Seconds()
-				fmt.Println(t, "best:", swarm.GetBestLength())
-				datas[i][t] =float64( swarm.GetBestLength() )
-			}
-			timeData[i] = &util.TestData{p.GetName(), "", timers[i]}
-			valueData[i] = &util.TestData{p.GetName(), "", datas[i]}
-		}
-
-		r1 := &util.ResultData{}
-		r2 := &util.ResultData{}
-		for _, d := range timeData {
-			r1.Results = append(r1.Results, d)
-		}
-		for _, d := range valueData {
-			r2.Results = append(r2.Results, d)
-		}
-		flag := ""
-		if c.Bool("speed") {
-			flag = "Q"
-		}
-		r1.SaveDataToFile("./reports/T-" + c.String("output") + flag + ".txt")
-		r2.SaveDataToFile("./reports/V-" + c.String("output") + flag + ".txt")
-		return nil
-	}
-	app.Run(os.Args)
 
 }

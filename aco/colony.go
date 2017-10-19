@@ -1,5 +1,6 @@
 package aco
 import (
+	"fmt"
 
 	"sync"
 	"github.com/lshengjian/aco-go/util"
@@ -40,6 +41,7 @@ type Colony struct {
 
    locks [][]sync.RWMutex
    IsQuick bool
+   IsMakeImage bool
    resultCh chan Message
    bestData []util.TourLengthData
    avgData []util.TourLengthData
@@ -150,20 +152,27 @@ func (p *Colony)	Run() {
 		}
 		
 	}
-	//end := time.Now().UnixNano()
-/*	ts := fmt.Sprintf("times:%.1f[ms]", float64(end-start)*1e-6)
-	fmt.Println(ts)
-	util.SaveTourLengthImage("tour-len.png",p.bestData,p.avgData)
-	vd:=make ([]util.CityData,p.size+1)
-	for i,item:=range vd{
-		cidx:=p.best[i]
-		item.Idx=cidx
-		city:=p.Problem.GetLocations()[cidx]
-		item.X,item.Y=city.X,city.Y
-		vd[i]=item
+
+/*  end := time.Now().UnixNano()
+	ts := fmt.Sprintf("times:%.1f[ms]", float64(end-start)*1e-6)
+	fmt.Println(ts)*/
+	if p.IsMakeImage {
+		fname:="./reports/"+p.Problem.GetName()
+		util.SaveTourLengthImage(fname+"-best.png",p.bestData,p.avgData)
+		vd:=make ([]util.CityData,p.size+1)
+		for i,item:=range vd{
+			cidx:=p.best[i]
+			item.Idx=cidx
+			city:=p.Problem.GetLocations()[cidx]
+			item.X,item.Y=city.X,city.Y
+			vd[i]=item
+		}
+	
+		util.SaveVisitedImage(fname+"-visited.png",vd)
+		fmt.Println("output images for:",fname)
+
 	}
 
-    util.SaveVisitedImage("visited.png",vd)*/
 }
 
 func (p *Colony) layPheromones(walkLength int ,walk []int) {
@@ -189,14 +198,14 @@ func (p *Colony) evaporatePheromones() {
 	}
 }
 
-func (p *Colony) findBest(x int,msg Message) int{
+func (p *Colony) findBest(step int,msg Message) int{
     l:=p.CalculateWalkLength(msg.walk)
     if l < p.bestLength {
 	//	str:=fmt.Sprintf("iterate:%d (ant:%d) -->%d",x,msg.ant.idx+1,l)
 		p.bestLength=l
 	//	fmt.Println(str)
 		p.best=msg.walk
-	    p.bestData=append(p.bestData,util.TourLengthData{x,p.bestLength})
+	    p.bestData=append(p.bestData,util.TourLengthData{step,p.bestLength})
    }
    return l
 }

@@ -2,10 +2,8 @@
 package tsp
 import (
 	"math/rand"
-	"fmt"
 	"bufio"
 	"os"
-
 	"strconv"
 	"strings"
 	"github.com/lshengjian/aco-go/util"
@@ -31,8 +29,11 @@ func (t *FileTSP) GetDistanceMatrix() IntMatrix{
 func NewFileTSP(fname string)(TSP) {
 	var rt FileTSP
 	rt.name=fname
-	fmt.Println(fname)
+	
 	if strings.HasSuffix(fname,"tsp"){
+		ss:=strings.Split(fname,".")
+		rt.name=ss[0]
+		//fmt.Println(rt.name)
 		rt.initGraph("./data/"+fname)
 	}else{
 		ss:=strings.Split(fname,"-")
