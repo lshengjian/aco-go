@@ -16,6 +16,7 @@ type TSP interface { //问题接口
 	GetName() string
 	GetLocations() []City
 	GetDistanceMatrix() IntMatrix
+	GetNNIdx(i,j int) int
 
 }
 

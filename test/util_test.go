@@ -1,6 +1,7 @@
 package test
 
 import (
+	"sort"
 	"fmt"
 	"math/rand"
     "math"
@@ -8,6 +9,7 @@ import (
 
 
 )
+
 func Test00(t *testing.T) {
 	sum:=0
 	for i:=0 ;i<100;i++{
@@ -17,6 +19,11 @@ func Test00(t *testing.T) {
 	   }
 	}
 	fmt.Println("NormFloat64 :",sum)
-	//t.pass()
+/*	data:=[]NNData{NNData{0,3},NNData{1,2},NNData{2,4}}
+	fmt.Println(data)
+	sort.Slice(data,func (a,b int) bool{
+		return data[a].length<data[b].length
+	})
+	fmt.Println(data)*/
   
 }

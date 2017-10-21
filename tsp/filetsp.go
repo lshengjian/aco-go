@@ -1,6 +1,7 @@
 
 package tsp
 import (
+	"sort"
 	"math/rand"
 	"bufio"
 	"os"
@@ -8,11 +9,16 @@ import (
 	"strings"
 	"github.com/lshengjian/aco-go/util"
 )
+type NNData struct{
+	idx int
+	length int
+}
 type FileTSP struct {
 	size        int
 	name string
 	locations []City
 	distanceMatrix IntMatrix
+	nnlist IntMatrix
 }
 func (t *FileTSP) GetSize() int{
 	return t.size
@@ -40,24 +46,41 @@ func NewFileTSP(fname string)(TSP) {
 		n,_:=strconv.Atoi(ss[1])
 		rt.randGraph(n)
 	}
-	
-	
 	return &rt
+}
+func (t *FileTSP) GetNNIdx(i,j int) int{
+	return t.nnlist[i][j]
+}
+func (t *FileTSP) makeMatrix(){
+	for i := range t.distanceMatrix {
+	    nncities:=make([]NNData,t.size)
+		t.distanceMatrix[i] = make([]int, t.size)
+		t.nnlist[i] = make([]int, t.size)
+		for j := range t.distanceMatrix[i] {
+			t.distanceMatrix[i][j] = CalEdge(t.locations[i], t.locations[j])
+		    nncities[j]=NNData{j,t.distanceMatrix[i][j]}
+		}
+		sort.Slice(nncities,func (a,b int) bool{
+			return nncities[a].length<nncities[b].length
+		})
+		for j,d := range nncities {
+			t.nnlist[i][j]=d.idx
+		}
+
+	}
 }
 //making graph
 func (t *FileTSP) randGraph(n int) {
 	t.locations = make([]City, n)
 	t.size = len(t.locations)
 	t.distanceMatrix = make(IntMatrix, t.size)
+	t.nnlist=make(IntMatrix, t.size)
 	for i := range t.locations {
 		t.locations[i]= City{rand.Float64()*100.0, rand.Float64()*100.0}
 	}
-	for i := range t.distanceMatrix {
-		t.distanceMatrix[i] = make([]int, t.size)
-		for j := range t.distanceMatrix[i] {
-			t.distanceMatrix[i][j] = CalEdge(t.locations[i], t.locations[j])
-		}
-	}
+	t.makeMatrix()
+
+	
 }
 //making graph
 func (t *FileTSP) initGraph(fname string) {
@@ -65,12 +88,8 @@ func (t *FileTSP) initGraph(fname string) {
 	t.readFile(fname)
 	t.size = len(t.locations)
 	t.distanceMatrix = make(IntMatrix, t.size)
-	for i := range t.distanceMatrix {
-		t.distanceMatrix[i] = make([]int, t.size)
-		for j := range t.distanceMatrix[i] {
-			t.distanceMatrix[i][j] = CalEdge(t.locations[i], t.locations[j])
-		}
-	}
+	t.nnlist=make(IntMatrix, t.size)
+	t.makeMatrix()
 }
 func (t *FileTSP) readFile(fname string) {
 	i, dim := 0, 0

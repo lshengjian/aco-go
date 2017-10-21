@@ -43,6 +43,7 @@ func (p *Ant) Tour(t int) {
 	  p.visited[next] = true
 	}
 	p.walk = append(p.walk, p.walk[0])
+	//p.colony.two_opt_first(p)
     //p.walkLength=p.calculateWalkLength()
 }
 

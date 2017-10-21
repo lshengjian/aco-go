@@ -1,4 +1,6 @@
 package util
+
+//GLPATH=/usr/lib make
 import (
 	"image/color"
 	"os"
@@ -19,6 +21,36 @@ func CheckError(e error) {
 		panic(e)
 	}
 }
+	
+/*  
+	 Copyright (C) 2004  Thomas Stuetzle  
+      FUNCTION:       generate a random permutation of the integers 0 .. n-1
+      INPUT:          length of the array
+      OUTPUT:         pointer to the random permutation
+      (SIDE)EFFECTS:  the array holding the random permutation is allocated in this 
+                      function. Don't forget to free again the memory!
+      COMMENTS:       only needed by the local search procedures
+*/
+func GenerateRandomPermutation( n int)([]int){
+		i, help, node, tot_assigned := 0,0,0,0
+		r :=make ([]int,n)
+	
+		for  i = 0 ; i < n; i++{
+		  r[i] = i
+		} 
+	
+	   for  i = 0 ; i < n ; i++  {
+		 /* find (randomly) an index for a free unit */ 
+		 rnd  :=rand.Float64()
+		 node = int (rnd  * float64((n - tot_assigned)) )
+		 help = r[i]
+		 r[i] = r[i+node]
+		 r[i+node] = help
+		 tot_assigned++
+	   }
+	   return r
+	}
+
 	
 	func WriteFile(fname ,data string)  {
 		err:=ioutil.WriteFile(fname,[]byte(data),0644)
