@@ -1,12 +1,12 @@
 package test
 
 import (
-	"sort"
+//	"sort"
 	"fmt"
 	"math/rand"
     "math"
 	"testing"
-
+	"github.com/lshengjian/aco-go/util"
 
 )
 
@@ -25,5 +25,10 @@ func Test00(t *testing.T) {
 		return data[a].length<data[b].length
 	})
 	fmt.Println(data)*/
+  
+}
+func Test01(t *testing.T) {
+	data:=[]int{1,2,5,4,3,6,7,1}
+	util.Exchange2Nodes(data,1,4)
   
 }

@@ -2,6 +2,7 @@ package util
 
 //GLPATH=/usr/lib make
 import (
+//	"sort"
 	"image/color"
 	"os"
 	"fmt"
@@ -20,6 +21,27 @@ func CheckError(e error) {
 	if e != nil {
 		panic(e)
 	}
+}
+func Exchange2Nodes( data []int,i,j int){
+	//if j+1>=len(data)-1{
+	//	fmt.Println(j)
+	//}
+  part:=data[i+1:j+1]
+  //fmt.Println(part)
+  size:=len(part)
+  part2:=make([]int,size)
+  k:=0
+  for idx:=size-1;idx>=0;idx--{
+	part2[k]=part[idx]
+	k++
+  }
+ // sort.Reverse(sort.IntSlice(part))
+//  fmt.Println(part2)
+  start:=i+1
+  for idx,v:=range part2{
+	data[start+idx] = v
+  }
+  //fmt.Println(data)
 }
 	
 /*  

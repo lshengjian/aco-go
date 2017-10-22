@@ -1,8 +1,11 @@
 package aco
 
 import (
+//	"fmt"
 	"math"
 	"math/rand"
+	"github.com/lshengjian/aco-go/util"
+	
 )
 
 type Ant struct {
@@ -34,7 +37,20 @@ func (p *Ant) setBase(base int) {
 	p.visited = make([]bool,p.colony.size)
 	p.visited[base] = true
 }
-
+func (p *Ant) opt2() {
+	distances:=p.colony.Problem.GetDistanceMatrix()
+	size:=len(p.walk)
+	for i:=0;i<size-3;i++{
+		for j:=i+2;j<size-2;j++{
+			ci,cj,ci1,cj1:=p.walk[i],p.walk[j],p.walk[i+1],p.walk[j+1]
+			if distances[ci][ci1]+distances[cj][cj1]>distances[ci][cj]+distances[ci1][cj1]{
+			   util.Exchange2Nodes(p.walk,i,j)
+			  // fmt.Println(i,j)
+			}
+			
+		}	
+	}
+}
 func (p *Ant) Tour(t int) {
 	p.setBase(rand.Intn(p.colony.size))
 	for i := 1;i < p.colony.size;i++ {
@@ -43,7 +59,7 @@ func (p *Ant) Tour(t int) {
 	  p.visited[next] = true
 	}
 	p.walk = append(p.walk, p.walk[0])
-	//p.colony.two_opt_first(p)
+	p.opt2()
     //p.walkLength=p.calculateWalkLength()
 }
 

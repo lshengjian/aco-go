@@ -12,7 +12,7 @@ import (
 
 func Test01ACO(t *testing.T) {
 	a := assert.New(t)
-	tsp:=tsp.NewFileTSP("../data/eil51.tsp")
+	tsp:=tsp.NewFileTSP("eil51.tsp")
 	swarm:=aco.NewColony(1,1,1,4.5,0.16,1,1,tsp)
 	
 	a.Equal(51,tsp.GetSize())

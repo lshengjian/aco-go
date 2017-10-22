@@ -13,7 +13,7 @@ func Test01TSP(t *testing.T) {
 	c1:=tsp.City{0,0}
 	c2:=tsp.City{3,4}
 	a.Equal(5,tsp.CalEdge(c1,c2))
-	tsp:=tsp.NewFileTSP("../data/eil51.tsp")
+	tsp:=tsp.NewFileTSP("eil51.tsp")
 	a.Equal(51,tsp.GetSize())
 	cities:=tsp.GetLocations()
 	node:=cities[50]
@@ -23,9 +23,10 @@ func Test01TSP(t *testing.T) {
 //	fmt.Println(cities)
 	a.Equal(12,dis[0][1])
 }
+/*
 func Test02TSP(t *testing.T) {
 	a := assert.New(t)
-	tsp:=tsp.NewFileTSP("../data/TSP_D")
+	tsp:=tsp.NewFileTSP("TSP_D")
 	a.Equal(38,tsp.GetSize())
 	cities:=tsp.GetLocations()
 	node:=cities[0]
@@ -38,7 +39,7 @@ func Test02TSP(t *testing.T) {
 }
 func Test03TSP(t *testing.T) {
 	a := assert.New(t)
-	tsp:=tsp.NewFileTSP("../data/TSP_WS")
+	tsp:=tsp.NewFileTSP("TSP_WS")
 	a.Equal(29,tsp.GetSize())
 	cities:=tsp.GetLocations()
 	node:=cities[18]
@@ -49,6 +50,7 @@ func Test03TSP(t *testing.T) {
 	//fmt.Println(cities)
 
 }
+*/
 
 
 

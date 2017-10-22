@@ -1,8 +1,9 @@
 # aco-go
 Ant Colony Optimization implement by golang
 
-![walk length](tour-len.png "[walk length")
-![visited](visited.png "visited cities")
+![visited](eil51-visited.png "visited cities")
+![walk length](eil51-best.png "[walk length")
+
 
 ```
 
