@@ -8,7 +8,7 @@ Ant Colony Optimization implement by golang
 ```
 
 VERSION:
-   1.0.0
+   1.3.1
 
 AUTHOR:
    Liu Shengjian <lsj178@139.com>
