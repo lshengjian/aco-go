@@ -16,7 +16,7 @@ import (
 )
 
 // Version holds the current app version
-var Version = "1.0.0"
+var Version = "1.3.1"
 func run(app *cli.App){
 	app.Action = func(c *cli.Context) error {
 		rand.Seed(time.Now().UnixNano())
